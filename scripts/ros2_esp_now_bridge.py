@@ -24,8 +24,8 @@ PC_CONFIG = {
     },
     'receive': {
         # 'ros_topic_name': 'message.type.string'
-        'robot/battery': 'std_msgs/String',
-        'robot/odom': 'nav_msgs/Odometry'
+        # '/odom': 'nav_msgs/Odometry'
+        '/ping': 'std_msgs/String'
     }
 }
 
@@ -34,8 +34,7 @@ ROBOT_CONFIG = {
     'node_name': 'robot_bridge_node',
     'send': {
         # 'ros_topic_name': 'message.type.string'
-        'robot/battery': 'std_msgs/String',
-        'robot/odom': 'nav_msgs/Odometry'
+        # '/odom': 'nav_msgs/Odometry'
     },
     'receive': {
         # 'ros_topic_name': 'message.type.string'
@@ -124,32 +123,31 @@ class EspNowBridge(Node):
     def read_serial_callback(self):
         """Timer callback to read from serial and publish to topics."""
         if self.serial_port.in_waiting > 0:
-            packet = "" # Clear packet
             try:
-                packet = self.serial_port.readline().decode('utf-8').strip()
-                
-                # 1. Parse the packet: "topic_name|json_payload"
+                raw = self.serial_port.readline()
+                if not raw:
+                    return
+
+                packet = raw.decode('utf-8', errors='ignore').strip()
+                if '|' not in packet or not packet:
+                    return  # Skip invalid or empty packets
+
                 topic_name, payload = packet.split('|', 1)
-                
-                # 2. Check if we are configured to publish this topic
+
                 if topic_name in self.publishers_:
-                    # 3. Convert JSON string to a dictionary
+                    if not payload.startswith('{') or not payload.endswith('}'):
+                        self.get_logger().warn(f"Skipping malformed JSON from {topic_name}")
+                        return
+
                     msg_dict = json.loads(payload)
-                    
-                    # 4. Get the message type class we need to create
                     msg_class = self.publishers_[topic_name].msg_type
-                    
-                    # --- THE FIX IS HERE ---
-                    # 5. Create an empty message and populate it from the dict
                     msg_to_publish = msg_class()
                     set_message.set_message_fields(msg_to_publish, msg_dict)
-                    
-                    # 6. Publish the message
                     self.publishers_[topic_name].publish(msg_to_publish)
                     self.get_logger().info(f'Received <- {topic_name} ({len(payload)} bytes)')
-                
             except Exception as e:
-                self.get_logger().warn(f"Error parsing serial data: {e} \n\tData: '{packet}'")
+                self.get_logger().warn(f"Error parsing serial data: {e}")
+
 
 def main(args=None):
     rclpy.init(args=args)
