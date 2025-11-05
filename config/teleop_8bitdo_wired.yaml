@@ -1,0 +1,56 @@
+# Teleop configuration for 8BitDo Pro 2 Gamepad using the D mode configuration.
+# 8BitDo Pro2 Axes and Buttons:
+# axes[0-7]:
+# [0] = left stick +left / -right
+# [1] = left stick +up / -down
+# [2] = L2 
+# [3] = right stick +left / -right
+# [4] = right stick +up / -down
+# [5] = R2
+# [6] = Dpad +left / -right
+# [7] = Dpad +up / -down
+
+# buttons[0-15]: (0 = not pressed / 1 = pressed)
+# [0] = B
+# [1] = A
+# [2] = Y
+# [3] = X
+# [4] = L
+# [5] = R
+# [6] = Select
+# [7] = Start
+# [8] = Turbo (checker board button)
+# [9] = left stick button
+# [10] = right stick buttonright stick button
+
+# x == forward - reverse
+# y == crab sideways / diagonally
+# yaw == normal ackerman steering
+
+teleop_twist_joy:
+  ros__parameters:
+    axis_linear:
+      x: 0
+      y: 3
+    scale_linear:
+      x: 0.4
+      y: 0.4
+    scale_linear_turbo:
+      x: 1.0
+      y: 1.0
+
+    axis_angular:
+      yaw: 0
+    scale_angular:
+      yaw: 0.6
+    scale_angular_turbo:
+      yaw: 1.2
+
+    enable_button: 4
+    enable_turbo_button: 5
+
+joy_node:
+  ros__parameters:
+    deadzone: 0.1
+    autorepeat_rate: 20
+    dev: /dev/input/js0

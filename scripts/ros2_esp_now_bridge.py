@@ -25,7 +25,7 @@ PC_CONFIG = {
     'receive': {
         # 'ros_topic_name': 'message.type.string'
         # '/odom': 'nav_msgs/Odometry'
-        '/ping': 'std_msgs/String'
+        # '/ping': 'std_msgs/String'
     }
 }
 
