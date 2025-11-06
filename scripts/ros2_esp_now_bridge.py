@@ -10,7 +10,7 @@ from rosidl_runtime_py import set_message  # <-- THE FIX IS HERE
 
 # --- CONFIGURE THIS ---
 SERIAL_PORT = '/dev/ttyUSB0'  # Linux: /dev/ttyUSB0, Windows: COM3
-BAUD_RATE = 115200
+BAUD_RATE = 115200 # ESP NOW
 # --------------------
 
 # --- DEFINE YOUR CONFIGURATIONS ---
