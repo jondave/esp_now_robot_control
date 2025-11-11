@@ -3,7 +3,7 @@ import threading
 import time
 
 # --- CONFIGURE THIS ---
-SERIAL_PORT = 'COM3'  # Change this to your ESP32's COM port
+SERIAL_PORT = '/dev/ttyUSB0'  # Change this to your ESP32's COM port
 BAUD_RATE = 115200
 # --------------------
 

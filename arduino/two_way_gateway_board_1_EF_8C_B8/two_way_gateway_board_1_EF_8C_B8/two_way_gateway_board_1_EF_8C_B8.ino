@@ -11,17 +11,17 @@
 // CONFIGURATION
 // --------------------------------------------------------------------
 
-// WHEN UPLOADING TO BOARD 1 (...4F:CC), use Board 2's MAC here:
-uint8_t peerMac[] = {0xEC, 0xE3, 0x34, 0x46, 0x7E, 0xE8};
+// WHEN UPLOADING TO BOARD 1 (...EF:8C:B8), use Board 2's MAC here:
+uint8_t peerMac[] = {0x68, 0x25, 0xDD, 0xEF, 0x49, 0x80};
 
-// WHEN UPLOADING TO BOARD 2 (...7E:E8), use Board 1's MAC here:
-// uint8_t peerMac[] = {0xEC, 0xE3, 0x34, 0x46, 0x4F, 0xCC};
+// WHEN UPLOADING TO BOARD 2 (...EF:49:80), use Board 1's MAC here:
+// uint8_t peerMac[] = {0x68, 0x25, 0xDD, 0xEF, 0x8C, 0xB8};
 
 // --------------------------------------------------------------------
 // MESSAGE STRUCTURE
 // --------------------------------------------------------------------
 typedef struct struct_message {
-  char text[100];
+  char text[250];
 } struct_message;
 
 struct_message myData;
@@ -60,6 +60,7 @@ void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *incomingDat
 // --------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
+  Serial.setRxBufferSize(256);
   delay(200);
 
   WiFi.mode(WIFI_STA);
@@ -95,7 +96,7 @@ void setup() {
 // MAIN LOOP
 // --------------------------------------------------------------------
 void loop() {
-  static char inputBuffer[100];
+  static char inputBuffer[256];
   static size_t index = 0;
 
   while (Serial.available()) {
