@@ -1,0 +1,101 @@
+import curses
+import serial
+import time
+
+# --- CONFIGURE THIS ---
+# On Linux/Pi, this is usually /dev/ttyACM0 or /dev/ttyUSB0
+SERIAL_PORT = '/dev/ttyACM0'  
+BAUD_RATE = 9600
+# --------------------
+
+def main(stdscr):
+    # 1. Setup Serial Connection
+    try:
+        board = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
+        time.sleep(2) # Allow Arduinos to reset
+    except serial.SerialException as e:
+        stdscr.addstr(0, 0, f"Error opening serial port: {e}")
+        stdscr.addstr(2, 0, "Check your port (e.g., /dev/ttyACM0)!")
+        stdscr.refresh()
+        time.sleep(5)
+        return
+
+    # 2. Setup Terminal UI
+    curses.curs_set(0)    # Hide the blinking cursor
+    stdscr.nodelay(True)  # Make getch() non-blocking
+    stdscr.clear()
+    
+    stdscr.addstr(0, 0, "=== LoRa Robot Controller (SSH Mode) ===")
+    stdscr.addstr(2, 0, "Controls:")
+    stdscr.addstr(3, 0, "  [W] Forward   [Q] Speed Up")
+    stdscr.addstr(4, 0, "  [S] Backward  [Z] Speed Down")
+    stdscr.addstr(5, 0, "  [A] Left      [P] Quit")
+    stdscr.addstr(6, 0, "  [D] Right")
+    stdscr.addstr(8, 0, "Status: Ready")
+
+    last_send_time = 0
+    is_moving = False
+    
+    # 3. Main Loop
+    while True:
+        try:
+            # Read key from terminal (returns -1 if no key pressed)
+            key_code = stdscr.getch()
+        except:
+            key_code = -1
+
+        current_time = time.time()
+        
+        if key_code != -1:
+            # Convert key code to character
+            try:
+                char = chr(key_code).lower()
+            except ValueError:
+                continue
+
+            # --- EXIT ---
+            if char == 'p':
+                break
+            
+            # --- COMMANDS ---
+            if char in ['w', 'a', 's', 'd', 'q', 'z']:
+                # Send the command
+                try:
+                    # Note: We encode to bytes before writing
+                    board.write(f"{char}\n".encode('utf-8'))
+                    
+                    # Update status on screen
+                    stdscr.move(8, 0)
+                    stdscr.clrtoeol() # Clear previous status
+                    stdscr.addstr(8, 0, f"Status: Sending '{char}'")
+                    
+                    last_send_time = current_time
+                    
+                    if char in ['w', 'a', 's', 'd']:
+                        is_moving = True
+                        
+                except Exception as e:
+                    stdscr.addstr(10, 0, f"Serial Error: {e}")
+
+        # --- AUTO-STOP LOGIC ---
+        # "Curses" cannot detect Key Release.
+        # Instead, we check: "Has it been >150ms since the last key press?"
+        # If yes, and we were moving, send STOP.
+        if is_moving and (current_time - last_send_time > 0.15):
+            try:
+                # FIX: Ensure this line is exactly as written below
+                board.write(b"x\n")
+                
+                stdscr.move(8, 0)
+                stdscr.clrtoeol()
+                stdscr.addstr(8, 0, "Status: Stopped")
+                
+                is_moving = False
+            except:
+                pass
+
+        stdscr.refresh()
+        time.sleep(0.05) # Small delay to prevent CPU hogging
+
+# Wrapper handles initialization and cleanup automatically
+curses.wrapper(main)

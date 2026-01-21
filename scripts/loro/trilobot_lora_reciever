@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+
+import time
+from trilobot import Trilobot
+import serial
+
+print("Trilobot: LoRa Remote Control\n")
+print("Listening for LoRa commands...")
+
+# --- CONFIGURE THIS ---
+SERIAL_PORT = '/dev/ttyUSB0' # Ensure this matches your Pi's LoRa module
+BAUD_RATE = 9600             # LoRa uses 9600
+# --------------------
+
+tbot = Trilobot()
+speed = 0.5
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+WHITE = (255, 255, 255)
+
+try:
+    board = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    
+    while True:
+        # Read a line from the LoRa module
+        # The line will look like: "RX: w" or "TX_DONE"
+        if board.in_waiting > 0:
+            line = board.readline().decode('utf-8', errors='replace').strip()
+            
+            # We only care if it starts with "RX:" (Received Message)
+            if line.startswith("RX:"):
+                # Remove the "RX: " part to get the actual command
+                # "RX: w" -> "w"
+                command_str = line[4:].strip()
+                
+                if len(command_str) > 0:
+                    char = command_str[0]
+                else:
+                    continue
+
+                # --- MOVEMENT LOGIC ---
+                if char == "p":
+                    print("Exit command received")
+                    tbot.stop()
+                    tbot.clear_underlighting()
+                    break 
+
+                elif char == "a":
+                    print("Received: Left")
+                    tbot.turn_left(speed)
+                    tbot.fill_underlighting(BLUE)
+
+                elif char == "d":
+                    print("Received: Right")
+                    tbot.turn_right(speed)
+                    tbot.fill_underlighting(GREEN)
+
+                elif char == "w":
+                    print("Received: Forward")
+                    tbot.forward(speed)
+                    tbot.fill_underlighting(WHITE)
+
+                elif char == "s":
+                    print("Received: Reverse")
+                    tbot.backward(speed)
+                    tbot.fill_underlighting(RED)
+
+                elif char == "x":
+                    print("Received: Stop")
+                    tbot.stop()
+                    tbot.clear_underlighting()
+
+                elif char == "q":
+                    speed = round(min(1.0, speed + 0.1), 1)
+                    print(f"Speed UP: {speed}")
+
+                elif char == "z":
+                    speed = round(max(0.0, speed - 0.1), 1)
+                    print(f"Speed DOWN: {speed}")
+                
+except serial.SerialException:
+    print(f"Error: Could not open port {SERIAL_PORT}.")
+except KeyboardInterrupt:
+    print("\nProgram stopped.")
+finally:
+    tbot.stop()
+    tbot.clear_underlighting()
+    if 'board' in locals() and board.is_open:
+        board.close()
+    print("Exiting.")
